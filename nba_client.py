@@ -21,6 +21,20 @@ class NBAClient:
             'Referer': 'https://stats.nba.com/'
         }
 
+    def _get_today_et(self) -> str:
+        """
+        Retorna a data de hoje no formato MM/DD/YYYY no timezone ET (Eastern Time).
+        ET é UTC-5 (EST) ou UTC-4 (EDT durante daylight saving).
+        Durante a temporada da NBA (outubro a junho), geralmente é EST (UTC-5).
+        """
+        # Obter UTC agora
+        utc_now = datetime.datetime.utcnow()
+        # ET pode ser UTC-4 (EDT) ou UTC-5 (EST)
+        # Durante a temporada da NBA (outubro a junho), geralmente é EST (UTC-5)
+        est_offset = datetime.timedelta(hours=-5)
+        et_now = utc_now + est_offset
+        return et_now.strftime('%m/%d/%Y')
+
     def get_games_by_date(self, game_date: str) -> List[Dict[str, Any]]:
         """
         Busca jogos de uma data específica usando ScoreboardV2.
@@ -32,15 +46,15 @@ class NBAClient:
             Lista de jogos com informações básicas
         """
         try:
-            # Converter data para formato esperado pela API (YYYYMMDD)
+            # Converter data para formato esperado pela API
             date_obj = datetime.datetime.strptime(game_date, '%Y-%m-%d')
             formatted_date = date_obj.strftime('%m/%d/%Y')
 
-            today = datetime.datetime.now().strftime('%m/%d/%Y')
-            if formatted_date == today:
+            # Usar data de hoje no timezone ET
+            today_et = self._get_today_et()
+            if formatted_date == today_et:
                 # Usar endpoint ao vivo para jogos de hoje
                 scoreboard = ScoreBoard()
-
             else:
                 scoreboard = scoreboardv3.ScoreboardV3(game_date=formatted_date)   
             # Chamar ScoreboardV3
